@@ -4,11 +4,11 @@ A focused, responsive task-management dashboard built for the Hammoq Infosystems
 
 ## Features
 
-- Create, edit, delete (with confirmation), and complete/reopen tasks.
+- Create, edit, and delete tasks; move them from Pending to In Progress to Completed, or reopen completed tasks.
 - Task title, optional description and due date, and Low / Medium / High priority.
 - Search titles and descriptions; filter by status and priority.
 - Sort by creation or due date, with server-side pagination.
-- Total, pending, and completed statistics; loading, empty, success, and error states.
+- Total, pending, in-progress, and completed statistics; loading, empty, success, and error states.
 - Responsive desktop/mobile layout and keyboard-accessible labelled forms.
 - Server-side input validation, strict field allow-list, CORS, body-size limit, centralized error responses, and safe handling of invalid IDs.
 
@@ -94,7 +94,7 @@ The Vite UI is at `http://localhost:5173`; the API listens on `http://localhost:
 
 ## REST API
 
-Successful responses use `{ "success": true, "data": ... }`; errors use `{ "success": false, "message": "..." }`. A task contains `title`, `description`, `priority`, `status`, `dueDate`, `createdAt`, and `updatedAt`.
+Successful responses use `{ "success": true, "data": ... }`; errors use `{ "success": false, "message": "..." }`. A task contains `title`, `description`, `priority`, `status`, `dueDate`, `createdAt`, and `updatedAt`. Statuses are `Pending`, `In Progress`, and `Completed`; new tasks default to `Pending`.
 
 | Method | Path | Behavior |
 | --- | --- | --- |
@@ -108,12 +108,12 @@ Successful responses use `{ "success": true, "data": ... }`; errors use `{ "succ
 `GET /api/tasks` query parameters:
 
 - `search`: case-insensitive title/description search (max 100 characters).
-- `status`: `Pending` or `Completed`.
+- `status`: `Pending`, `In Progress`, or `Completed`.
 - `priority`: `Low`, `Medium`, or `High`.
 - `sort`: `createdAt:asc`, `createdAt:desc` (default), `dueDate:asc`, or `dueDate:desc`.
 - `page`: positive integer (default 1); `limit`: 1–100 (default 50).
 
-Response data includes `tasks`, global `stats` (`total`, `pending`, `completed`), and filtered-result `pagination` (`page`, `limit`, `total`, `pages`). Unknown write fields and invalid query values are rejected.
+Response data includes `tasks`, global `stats` (`total`, `pending`, `inProgress`, `completed`), and filtered-result `pagination` (`page`, `limit`, `total`, `pages`). Unknown write fields and invalid query values are rejected.
 
 ## Tests and production build
 
@@ -135,7 +135,8 @@ Tests use a temporary in-memory MongoDB, never the configured application databa
 - [ ] Create a task with only a title; confirm default Medium priority and Pending status.
 - [ ] Create a task with description, priority, and due date; confirm values render.
 - [ ] Edit the title/details/date; confirm the list and counts refresh.
-- [ ] Complete then reopen a task; confirm status filter and counts update.
+- [ ] Start a Pending task; confirm it moves to In Progress and the status filter and counts update.
+- [ ] Complete an In Progress task, then reopen it; confirm it moves to Pending and the status filter and counts update.
 - [ ] Delete a task and cancel a separate deletion at the confirmation prompt.
 - [ ] Search by title and description; combine with status/priority filters.
 - [ ] Sort by oldest/newest and due date; exercise empty states.
