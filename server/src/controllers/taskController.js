@@ -3,7 +3,7 @@ const Task = require('../models/Task');
 
 const allowedFields = new Set(['title', 'description', 'priority', 'status', 'dueDate']);
 const priorities = new Set(['Low', 'Medium', 'High']);
-const statuses = new Set(['Pending', 'Completed']);
+const statuses = new Set(['Pending', 'In Progress', 'Completed']);
 
 function validateTaskInput(body, { partial = false } = {}) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -51,7 +51,7 @@ function validateTaskInput(body, { partial = false } = {}) {
     throw error;
   }
   if (Object.prototype.hasOwnProperty.call(clean, 'status') && !statuses.has(clean.status)) {
-    const error = new Error('Status must be Pending or Completed.');
+    const error = new Error('Status must be Pending, In Progress, or Completed.');
     error.status = 400;
     throw error;
   }
@@ -80,7 +80,7 @@ function parseListQuery(query) {
     throw error;
   }
   if (query.status && !statuses.has(query.status)) {
-    const error = new Error('Status filter must be Pending or Completed.');
+    const error = new Error('Status filter must be Pending, In Progress, or Completed.');
     error.status = 400;
     throw error;
   }
@@ -118,18 +118,19 @@ async function getTasks(req, res) {
     filter.$or = [{ title: expression }, { description: expression }];
   }
   const sort = { [sortBy]: order === 'asc' ? 1 : -1, _id: 1 };
-  const [tasks, total, totalTasks, pending, completed] = await Promise.all([
+  const [tasks, total, totalTasks, pending, inProgress, completed] = await Promise.all([
     Task.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
     Task.countDocuments(filter),
     Task.countDocuments(),
     Task.countDocuments({ status: 'Pending' }),
+    Task.countDocuments({ status: 'In Progress' }),
     Task.countDocuments({ status: 'Completed' }),
   ]);
   res.json({
     success: true,
     data: {
       tasks,
-      stats: { total: totalTasks, pending, completed },
+      stats: { total: totalTasks, pending, inProgress, completed },
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     },
   });

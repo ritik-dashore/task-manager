@@ -15,7 +15,7 @@ export default function App() {
   const [sort, setSort] = useState('createdAt:desc');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0 });
+  const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -85,11 +85,12 @@ export default function App() {
     }
   }
 
-  async function toggleTask(task) {
+  async function updateTaskStatus(task, nextStatus) {
     setBusyTask(task._id);
     try {
-      await api.patch(`/tasks/${task._id}`, { status: task.status === 'Completed' ? 'Pending' : 'Completed' });
-      setNotice(task.status === 'Completed' ? 'Task moved back to to do.' : 'Nice work — task completed.');
+      await api.patch(`/tasks/${task._id}`, { status: nextStatus });
+      setNotice(nextStatus === 'Completed' ? 'Nice work — task completed.' :
+        nextStatus === 'In Progress' ? 'Task moved to in progress.' : 'Task moved back to to do.');
       await loadTasks();
     } catch (requestError) {
       setError(getApiError(requestError));
@@ -142,8 +143,8 @@ export default function App() {
           {error && <div className="alert-error" role="alert"><span>{error}</span><button type="button" onClick={() => loadTasks()} className="retry-button">Try again</button></div>}
           <div className="task-list" aria-live="polite">
             {loading ? <div className="loading-state"><span className="spinner" />Gathering your tasks…</div> :
-              tasks.length ? tasks.map(task => <div key={task._id} className={busyTask === task._id ? 'task-busy' : ''}><TaskCard task={task} onToggle={toggleTask} onEdit={editTask} onDelete={deleteTask} /></div>) :
-                <div className="empty-state"><span className="empty-icon"><ClipboardList size={25} /></span><h3>{error ? 'We couldn’t load your tasks' : search || priority ? 'No tasks match those filters' : status === 'Completed' ? 'Nothing completed just yet' : status === 'Pending' ? 'You’re all caught up' : 'A clear desk starts here'}</h3><p>{error ? 'Check the API connection and try again.' : search || priority ? 'Try changing your search or filters.' : status === 'Completed' ? 'Completed tasks will find a home here.' : status === 'Pending' ? 'Enjoy the breathing room, or add something new.' : 'Add your first task and turn a plan into progress.'}</p>{!error && status === 'All' && !search && <button className="button button-primary" onClick={openCreate}><Plus size={17} />Create your first task</button>}</div>}
+              tasks.length ? tasks.map(task => <div key={task._id} className={busyTask === task._id ? 'task-busy' : ''}><TaskCard task={task} onStatusChange={updateTaskStatus} onEdit={editTask} onDelete={deleteTask} /></div>) :
+                <div className="empty-state"><span className="empty-icon"><ClipboardList size={25} /></span><h3>{error ? 'We couldn’t load your tasks' : search || priority ? 'No tasks match those filters' : status === 'Completed' ? 'Nothing completed just yet' : status === 'In Progress' ? 'Nothing in progress yet' : status === 'Pending' ? 'You’re all caught up' : 'A clear desk starts here'}</h3><p>{error ? 'Check the API connection and try again.' : search || priority ? 'Try changing your search or filters.' : status === 'Completed' ? 'Completed tasks will find a home here.' : status === 'In Progress' ? 'Start a task from your to-do list when you are ready.' : status === 'Pending' ? 'Enjoy the breathing room, or add something new.' : 'Add your first task and turn a plan into progress.'}</p>{!error && status === 'All' && !search && <button className="button button-primary" onClick={openCreate}><Plus size={17} />Create your first task</button>}</div>}
           </div>
         </section>
         <footer className="footer-note">Small steps, meaningful progress. <span>✦</span></footer>

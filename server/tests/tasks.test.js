@@ -37,13 +37,17 @@ describe('Task API', () => {
       { title: 'Write launch notes', description: 'For release', priority: 'High' },
       { title: 'Tidy desk', status: 'Completed', priority: 'Low' },
       { title: 'Review launch plan', priority: 'High' },
+      { title: 'Draft roadmap', status: 'In Progress', priority: 'Medium' },
     ]);
     const response = await request(app).get('/api/tasks?search=launch&priority=High&status=Pending&sort=createdAt:asc&limit=1');
     assert.equal(response.status, 200);
     assert.equal(response.body.data.tasks.length, 1);
     assert.equal(response.body.data.pagination.total, 2);
-    assert.deepEqual(response.body.data.stats, { total: 3, pending: 2, completed: 1 });
+    assert.deepEqual(response.body.data.stats, { total: 4, pending: 2, inProgress: 1, completed: 1 });
     assert.equal(response.body.data.tasks[0].title, 'Write launch notes');
+    const inProgress = await request(app).get('/api/tasks?status=In%20Progress');
+    assert.equal(inProgress.status, 200);
+    assert.equal(inProgress.body.data.tasks[0].title, 'Draft roadmap');
   });
 
   it('gets one task and returns not found for a valid missing ID', async () => {
@@ -55,6 +59,9 @@ describe('Task API', () => {
 
   it('updates task fields and rejects invalid values and unknown fields', async () => {
     const task = await Task.create({ title: 'Initial title' });
+    const started = await request(app).patch(`/api/tasks/${task.id}`).send({ status: 'In Progress' });
+    assert.equal(started.status, 200);
+    assert.equal(started.body.data.task.status, 'In Progress');
     const updated = await request(app).patch(`/api/tasks/${task.id}`).send({ title: 'Updated', status: 'Completed' });
     assert.equal(updated.status, 200);
     assert.equal(updated.body.data.task.status, 'Completed');

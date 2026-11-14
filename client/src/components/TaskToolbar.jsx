@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 const tabs = [
   { value: 'All', label: 'All tasks' },
   { value: 'Pending', label: 'To do' },
+  { value: 'In Progress', label: 'In progress' },
   { value: 'Completed', label: 'Completed' },
 ];
 
